@@ -1,29 +1,12 @@
 # README #
 
-This README would normally document whatever steps are necessary to get your application up and running.
-
 ### What is this repository for? ###
 
-* Quick summary
-* Version
-* [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
-
-### How do I get set up? ###
-
-* Summary of set up
-* Configuration
-* Dependencies
-* Database configuration
-* How to run tests
-* Deployment instructions
-
-### Contribution guidelines ###
-
-* Writing tests
-* Code review
-* Other guidelines
+* This repo contains source code for a COVID19 volunteer response email relay
+to support people who need to isolate themselves because of COVID19
+* This is created for Edinburgh city but could be reused else where.
 
 ### Who do I talk to? ###
 
-* Repo owner or admin
-* Other community or team contact
+* Please join our slack community if you want to help develop this application
+covid19edappdev.slack.com
