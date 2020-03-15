@@ -1,8 +1,10 @@
 #! /usr/bin/python
 
+import os
 import unittest 
+
 from email.message import EmailMessage
-from email.headerregistry import Address
+from datetime import datetime
 from EmailRelayProcessor import EmailRelayProcessor
 
 class EmailRelayProcessorTest(unittest.TestCase):
@@ -16,38 +18,41 @@ class EmailRelayProcessorTest(unittest.TestCase):
         
         Set up from auxdir... 
         """
-        self.auxDir = 
+        self.auxDir = os.path.join(os.getenv('COVID19EDAPP'),'auxdir')
         
         self.msg1 = EmailMessage()
         self.msg2 = EmailMessage()
         self.msg3 = EmailMessage()
         
-        self.msg1.set_content(open(os.path.join(self.auxDir,'testMessage1.txt').readlines()))
-        self.msg2.set_content(open(os.path.join(self.auxDir,'testMessage2.txt').readlines()))
-        self.msg3.set_content(open(os.path.join(self.auxDir,'testMessage2.txt').readlines()))
-        self.msg1['Date'] = 
+        self.msg1.set_content(''.join(open(os.path.join(self.auxDir,'testMessage1.txt')).readlines()))
+        self.msg2.set_content(''.join(open(os.path.join(self.auxDir,'testMessage2.txt')).readlines()))
+        self.msg3.set_content(''.join(open(os.path.join(self.auxDir,'testMessage2.txt')).readlines()))
+        self.msg1['date'] = datetime(2010,3,1)
+        self.msg2['date'] = datetime(2020,4,1)
+        self.msg3['date'] = datetime(2020,3,1,12,3)
+        
  
-    def test_getDateSent1():
+    def test_getDateSent1(self):
         """ Test processing of get date sent
         
         """
         
         
-        expDateTime = 
+        expDateTime = datetime(2010,3,1)
         
         erp=EmailRelayProcessor()
         dateTime1 = erp.getDateSent(self.msg1) 
-        self.assertTrue(dateTime1.year,expDateTime.year)
-        self.assertTrue(dateTime1.month,expDateTime.month)
-        self.assertTrue(dateTime1.day,expDateTime.day)
-        self.assertTrue(dateTime1.hour,expDateTime.hour)
-        self.assertTrue(dateTime1.minute,expDateTime.minute)
-        self.assertTrue(dateTime1.second,expDateTime.second)
+        self.assertEqual(dateTime1.year,expDateTime.year)
+        self.assertEqual(dateTime1.month,expDateTime.month)
+        self.assertEqual(dateTime1.day,expDateTime.day)
+        self.assertEqual(dateTime1.hour,expDateTime.hour)
+        self.assertEqual(dateTime1.minute,expDateTime.minute)
+        self.assertEqual(dateTime1.second,expDateTime.second)
         
     def test_getPlainText1(self):
         """
         """
-        expPlainText = 
+        #expPlainText = 
         erp=EmailRelayProcessor()
         plainText1 = erp.getPlainText(self.msg1)
         # assert test 
@@ -57,7 +62,7 @@ class EmailRelayProcessorTest(unittest.TestCase):
         """
         """
         erp=EmailRelayProcessor()
-        subject,text,date = self.msg1.
+        #subject,text,date = self.msg1.
         
     
     def test_run1(self):

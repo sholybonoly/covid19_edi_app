@@ -72,6 +72,9 @@ class EmailRelayProcessor:
 
 
 #Process the latest emails in our inbox
-processor = EmailRelayProcessor()
-processor.init()
-processor.run()
+if __name__ == "__main__":
+    # Only run this part from the command line
+    # Add arguments / options?
+    processor = EmailRelayProcessor()
+    processor.init()
+    processor.run()
