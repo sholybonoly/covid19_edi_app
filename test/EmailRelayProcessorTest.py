@@ -1,7 +1,8 @@
 #! /usr/bin/python
 
 import unittest 
-import email
+from email.message import EmailMessage
+from email.headerregistry import Address
 from EmailRelayProcessor import EmailRelayProcessor
 
 class EmailRelayProcessorTest(unittest.TestCase):
@@ -15,15 +16,23 @@ class EmailRelayProcessorTest(unittest.TestCase):
         
         Set up from auxdir... 
         """
-        self.msg1 =
-        self.msg2 =
-        self.msg3 =
+        self.auxDir = 
         
+        self.msg1 = EmailMessage()
+        self.msg2 = EmailMessage()
+        self.msg3 = EmailMessage()
+        
+        self.msg1.set_content(open(os.path.join(self.auxDir,'testMessage1.txt').readlines()))
+        self.msg2.set_content(open(os.path.join(self.auxDir,'testMessage2.txt').readlines()))
+        self.msg3.set_content(open(os.path.join(self.auxDir,'testMessage2.txt').readlines()))
+        self.msg1['Date'] = 
  
     def test_getDateSent1():
         """ Test processing of get date sent
         
         """
+        
+        
         expDateTime = 
         
         erp=EmailRelayProcessor()
