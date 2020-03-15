@@ -21,6 +21,9 @@ class PostcodeProcessor:
         postcode = postcode.replace(" ","")
         reqResult = urllib.request.urlopen(self.postcode_api+postcode).read()
         data = json.loads(reqResult)
+        # @FIXME: This returns a dictionary of all the relevant data, not just longitude and latitude
+        # How do we want it returned? e.g. namedtuple
+        
         return data
     
     # this distance function uses the haversine formula 'as the crow flies' (don't ask me to explain the maths!)
