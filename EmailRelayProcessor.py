@@ -90,3 +90,13 @@ class EmailRelayProcessor:
         print(subject, " - ", date)
         print("--------")
         print(text)
+
+
+
+#Process the latest emails in our inbox
+if __name__ == "__main__":
+    # Only run this part from the command line
+    # Add arguments / options?
+    processor = EmailRelayProcessor()
+    processor.init()
+    processor.run()

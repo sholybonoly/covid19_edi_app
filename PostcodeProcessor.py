@@ -79,16 +79,19 @@ class PostcodeProcessor:
         
 
 
+if __name__ == "__main__":
+    # Only run this part from the command line
+    # Add arguments / options?
 
-processor = PostcodeProcessor()
-processor.init()
-processor.getDistanceBetweenTwoPostcodes("EH87JW","EH68BR")
-print("finding nearest neighbor to EH87JW from the list EH68BR EH395AJ and G1 1RU")
-neighbours = ["EH68BR","EH395AJ","G1 1RU"]
-processor.getNearestNeighbourToPostcode("EH87JW",neighbours)
-#expected output
-#fetching location data for [EH87JW]
-#fetching location data for [EH68BR]
-#Postcode [EH87JW], lat [55.949637] long [-3.148989]
-#Postcode [EH68BR], lat [55.968351] long [-3.166463]
-#Distance between [EH87JW] & [EH68BR] is [2348] meters, as the crow flies
+    processor = PostcodeProcessor()
+    processor.init()
+    processor.getDistanceBetweenTwoPostcodes("EH87JW","EH68BR")
+    print("finding nearest neighbor to EH87JW from the list EH68BR EH395AJ and G1 1RU")
+    neighbours = ["EH68BR","EH395AJ","G1 1RU"]
+    processor.getNearestNeighbourToPostcode("EH87JW",neighbours)
+    #expected output
+    #fetching location data for [EH87JW]
+    #fetching location data for [EH68BR]
+    #Postcode [EH87JW], lat [55.949637] long [-3.148989]
+    #Postcode [EH68BR], lat [55.968351] long [-3.166463]
+    #Distance between [EH87JW] & [EH68BR] is [2348] meters, as the crow flies
