@@ -5,13 +5,12 @@ import configparser
 
 class PostcodeProcessor:
 
-    postcode_api = 'http://api.postcodes.io/postcodes/'
+    postcode_api = ''
 
-    def init(self):
+    def __init__(self):
         config = configparser.ConfigParser()
         config.read('config.ini')
-        #self.postcode_api = config.get('DEFAULT','PostcodeApi')
-        print (self.postcode_api)
+        self.postcode_api = config.get('POSTCODE','PostcodeApi')
 
     # user the http://api.postcodes.io API to fetch location data for 
     # postcode
@@ -87,7 +86,6 @@ if __name__ == "__main__":
     # Add arguments / options?
 
     processor = PostcodeProcessor()
-    processor.init()
     processor.getDistanceBetweenTwoPostcodes("EH87JW","EH68BR")
     print("finding nearest neighbor to EH87JW from the list EH68BR EH395AJ and G1 1RU")
     neighbours = ["EH68BR","EH395AJ","G1 1RU"]

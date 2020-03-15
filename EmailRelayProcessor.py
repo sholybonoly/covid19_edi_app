@@ -4,20 +4,24 @@ import re
 from email import policy
 from datetime import datetime
 import configparser
+import PostcodeFinder
 
 class EmailRelayProcessor:
 
     email_user = ''
     email_pass = ''
+    post_code_processor = None
    
     def __init__(self):
+        """ On construction we will get email and password for our inbox where requests come in """
         config = configparser.ConfigParser()
         config.read('./config.ini')
         self.email_user = config['EMAIL']['Email']
         self.email_pass = config['EMAIL']['Password']
+        self.postcode_finder = PostcodeFinder.PostcodeFinder()
 
     def run(self):
-        # process new messages coming in from to our inbox.
+        """ process new messages coming in from to our inbox. """
         M = imaplib.IMAP4_SSL('imap.gmail.com', 993)
         M.login(self.email_user, self.email_pass)
         M.select('inbox')
@@ -57,8 +61,6 @@ class EmailRelayProcessor:
 
                 # this will apply copy changes
                 M.expunge()
-                print("Moved email %s to Processed folder" % (num.decode('utf-8')))
-                
         
         M.close()
         M.logout()
@@ -85,18 +87,22 @@ class EmailRelayProcessor:
 
 
     def processMailText(self, subject, text, date):
-        #not yet implemented just print out messages
+
+        # postcodes 
+        postcodes = []
+        # first look in the body of the text and if we didn't find anything
+        # look in the subject
+        postcodes += self.postcode_finder.find_postcodes(text)
+        if (len(postcodes) == 0):
+            postcodes += self.postcode_finder.find_postcodes(subject)
+
+        # TODO: Not yet fully implemented
+        #  not yet using postcodes - just print them out for now
         print("-------------------------------------------------------------------------")
         print(subject, " - ", date)
         print("--------")
         print(text)
+        print("--------")
+        print("Found postcodes = " + str(postcodes))
 
 
-
-#Process the latest emails in our inbox
-if __name__ == "__main__":
-    # Only run this part from the command line
-    # Add arguments / options?
-    processor = EmailRelayProcessor()
-    processor.init()
-    processor.run()
