@@ -2,10 +2,15 @@ import urllib.request
 import json
 import math
 import configparser
+import collections
+from collections import namedtuple
 
 class PostcodeProcessor:
 
     postcode_api = ''
+
+    Location = namedtuple('Location','latitude longitude')
+    
 
     def __init__(self):
         config = configparser.ConfigParser()
@@ -14,17 +19,22 @@ class PostcodeProcessor:
 
     # user the http://api.postcodes.io API to fetch location data for 
     # postcode
-    def getLatAndLongFromPostcode(self,postcode):
+    def getLocationFromPostcode(self,postcode):
         print("fetching location data for [{0}]".format(postcode))
+        # take out any whitespace
         postcode = postcode.strip()
         postcode = postcode.replace(" ","")
         reqResult = urllib.request.urlopen(self.postcode_api+postcode).read()
         data = json.loads(reqResult)
+        
+        latitude = data["result"]["latitude"]
+        longitude = data["result"]["longitude"]
+
+        loc = self.Location(latitude,longitude)
+        return loc
         # @FIXME: This returns a dictionary of all the relevant data, not just longitude and latitude
         # How do we want it returned? e.g. namedtuple
         
-        return data
-    
     # this distance function uses the haversine formula 'as the crow flies' (don't ask me to explain the maths!)
     # can read more here: https://www.movable-type.co.uk/scripts/latlong.html
     # it returns a value in meters, rounded up to the nearest whole meter
@@ -45,14 +55,14 @@ class PostcodeProcessor:
         return round(d)
 
     def getDistanceBetweenTwoPostcodes(self,postcodeA, postcodeB):
-        latLongOfA = self.getLatAndLongFromPostcode(postcodeA)
-        latLongOfB = self.getLatAndLongFromPostcode(postcodeB)
+        locationA = self.getLocationFromPostcode(postcodeA)
+        locationB = self.getLocationFromPostcode(postcodeB)
 
-        latitudeA = latLongOfA["result"]["latitude"]
-        longitudeA = latLongOfA["result"]["longitude"]
+        latitudeA = locationA.latitude
+        longitudeA = locationA.longitude
         
-        latitudeB = latLongOfB["result"]["latitude"]
-        longitudeB = latLongOfB["result"]["longitude"] 
+        latitudeB = locationB.latitude
+        longitudeB = locationB.longitude
 
         ##print("Postcode [{0}], lat [{1}] long [{2}]".format(postcodeA,latitudeA,longitudeA))
         ##print("Postcode [{0}], lat [{1}] long [{2}]".format(postcodeB,latitudeB,longitudeB))

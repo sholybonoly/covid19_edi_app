@@ -27,9 +27,9 @@ class EmailRelayProcessorTest(unittest.TestCase):
         """
         
         pstPrc=PostcodeProcessor()
-        coords=pstPrc.getLatAndLongFromPostcode(self.postcode1)
-        self.assertEqual(coords['result']['latitude'],self.longLat1.latitude)
-        self.assertEqual(coords['result']['longitude'],self.longLat1.longitude)
+        coords=pstPrc.getLocationFromPostcode(self.postcode1)
+        self.assertEqual(coords.latitude,self.longLat1.latitude)
+        self.assertEqual(coords.longitude,self.longLat1.longitude)
         
     def test_getLatAndLongFromPostcode2(self):
         """ Test processing of get date sent
@@ -37,9 +37,9 @@ class EmailRelayProcessorTest(unittest.TestCase):
         """
         
         pstPrc=PostcodeProcessor()
-        coords=pstPrc.getLatAndLongFromPostcode(self.postcode2)
-        self.assertNotEqual(coords['result']['latitude'],self.longLat1.latitude)
-        self.assertNotEqual(coords['result']['longitude'],self.longLat1.longitude)
+        coords=pstPrc.getLocationFromPostcode(self.postcode2)
+        self.assertNotEqual(coords.latitude,self.longLat1.latitude)
+        self.assertNotEqual(coords.longitude,self.longLat1.longitude)
         
     def test_getLatAndLongFromPostcode3(self):
         """ Test processing of get date sent
