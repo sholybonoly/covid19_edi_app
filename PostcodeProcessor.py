@@ -23,8 +23,9 @@ class PostcodeProcessor:
         print("fetching location data for [{0}]".format(postcode))
         # take out any whitespace
         try:
-            postcode = postcode.strip()
             postcode = postcode.replace(" ","")
+            postcode = postcode.upper()
+            print ("processing post code " + postcode)
             reqResult = urllib.request.urlopen(self.postcode_api+postcode).read()
             data = json.loads(reqResult)
         

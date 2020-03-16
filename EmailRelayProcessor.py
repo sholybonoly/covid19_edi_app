@@ -124,24 +124,21 @@ class EmailRelayProcessor:
                 print("finding team...")
                 forwardingEmail = self.volunteer_teams.get_email_from_postcode(nearestNeighbour)
                 print("team found, forwarding message")
+
+                print ("-------------------------------------")
+                print ("Found email with postcodes")
+                print (text)
+                print ("-------------------------------------")
+
             except:
                 print("team not found, forwarding to default address")
                 forwardingEmail = self.volunteer_teams.get_default_email_address()
+        else:
+            print("No postcode found in email, forwarding to default address")
+            forwardingEmail = self.volunteer_teams.get_default_email_address()
 
-            self.fowardEmail(msg, forwardingEmail)
-
-        # TODO: Not yet fully implemented
-        # We get get the postcodes but we this is not yet wired into
-        # determine which email it should go to
-        # just print out for now
-        print("-------------------------------------------------------------------------")
-        print(text)
-        print("--------")
-        
-
-        # TODO: once we figure out which email address to send it to we can use this fowardEmail
-        # e.g. self.fowardEmail(msg, 'covid19edapptest1@gmail.com')
-
+        print("Forwarding email to " + forwardingEmail)
+        self.fowardEmail(msg, forwardingEmail)
 
     def fowardEmail(self, message, to_addr):
 
