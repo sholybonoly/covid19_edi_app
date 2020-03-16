@@ -14,13 +14,12 @@ class PostcodeFinder:
 
     def find_postcodes(self, text):
         """ Find any postcodes in the text provided """
-        print (text)
+        
         # First look for any full postcodes
         # We will use these first
         # Ignore case and we don't care if there is a space between beginning and end
-        # Make sure we only find whole word results by using \b delimitters
 
-        matches = re.findall(r"\b" + self.prefix + '\d+ ?\d\w\w' + r"\b", text, re.IGNORECASE)
+        matches = re.findall(self.prefix + '\d+\s*\d\w\w', text, re.IGNORECASE)
 
         # Our PostcodeProcessor does not support partial poscodes yet
         # We could extend this look for partial postcodes at later point in time.
@@ -34,6 +33,7 @@ class PostcodeFinder:
         postcodes = []
         for match in matches:
             postcode = match.replace(" ", "")
+            postcode = postcode.replace("\n", "")
             postcode = postcode.upper()
             postcodes.append(postcode)
 
