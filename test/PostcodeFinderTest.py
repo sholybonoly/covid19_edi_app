@@ -14,25 +14,40 @@ class PostcodeFinderTest(unittest.TestCase):
         """
         self.auxDir = os.path.join(os.getenv('COVID19EDAPP'),'auxdir')
         
-        
         # Good postcode
-        self.msg1=''.join(open(os.path.join(self.auxDir,'testMessage1.txt')).readlines())
+        self.msg1 = self.read_test_file(os.path.join(self.auxDir,'testMessage1.txt'))
         self.postcodeList1=['EH165AA']
+
         # Partial postcode.
-        self.msg2=''.join(open(os.path.join(self.auxDir,'testMessage2.txt')).readlines())
+        self.msg2 = self.read_test_file(os.path.join(self.auxDir,'testMessage2.txt'))
         self.postcodeList2 = []
+
         # Outside Edinburgh 
-        self.msg3=''.join(open(os.path.join(self.auxDir,'testMessage3.txt')).readlines())
+        self.msg3 = self.read_test_file(os.path.join(self.auxDir,'testMessage3.txt'))
         self.postcodeList3 = []
+
         # Mixed up in text 
-        self.msg4=''.join(open(os.path.join(self.auxDir,'testMessage4.txt')).readlines())
+        self.msg4 = self.read_test_file(os.path.join(self.auxDir,'testMessage4.txt'))
         self.postcodeList4 = ['EH93HJ']
+
         # List 
-        self.msg5=''.join(open(os.path.join(self.auxDir,'testMessage5.txt')).readlines())
+        self.msg5 = self.read_test_file(os.path.join(self.auxDir,'testMessage5.txt'))
         self.postcodeList5 = ['EH93HJ','EH32BD', 'EH43HG', 'EH139DH', 'EH166DF']
+
         # EHno in other context
-        self.msg6=''.join(open(os.path.join(self.auxDir,'testMessage6.txt')).readlines())
+        self.msg6 = self.read_test_file(os.path.join(self.auxDir,'testMessage6.txt'))
         self.postcodeList6 = []
+
+        # Lower case postcode
+        self.msg7 = self.read_test_file(os.path.join(self.auxDir,'testMessage7.txt'))
+        self.postcodeList7 = ['EH165AA']
+
+
+    def read_test_file(self, filepath):
+        f = open(filepath)
+        lines = ''.join(f.readlines())
+        f.close()
+        return lines
         
         
     def test_find_postcodes1(self):
@@ -76,7 +91,6 @@ class PostcodeFinderTest(unittest.TestCase):
         
         """
     
-        
         pstFdr=PostcodeFinder()
         postcodeList=pstFdr.find_postcodes(self.msg4)
         self.assertListEqual(postcodeList,self.postcodeList4,
@@ -107,7 +121,17 @@ class PostcodeFinderTest(unittest.TestCase):
             'Post code list %s does not match expected list  %s: message = %s' % (
                 postcodeList,self.postcodeList6,self.msg6))
     
-          
+
+    def test_find_postcodes7(self):
+        """ Test to see if it handles lower case ok
+        
+        """
+    
+        pstFdr=PostcodeFinder()
+        postcodeList=pstFdr.find_postcodes(self.msg7)
+        self.assertListEqual(postcodeList,self.postcodeList7,
+            'Post code list %s does not match expected list  %s: message = %s' % (
+                postcodeList,self.postcodeList6,self.msg6))      
    
 
 #------------------------------------------------------------------------------
