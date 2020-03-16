@@ -34,8 +34,9 @@ class PostcodeProcessor:
 
             loc = self.Location(latitude,longitude)
             return loc
-        except:
+        except Exception as e:
             print("encountered error when finding location for [{0}]".format(postcode))
+            print(e)
             raise Exception("no location found for [{0}]".format(postcode))
         
     # this distance function uses the haversine formula 'as the crow flies' (don't ask me to explain the maths!)
