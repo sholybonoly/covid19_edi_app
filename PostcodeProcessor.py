@@ -22,18 +22,20 @@ class PostcodeProcessor:
     def getLocationFromPostcode(self,postcode):
         print("fetching location data for [{0}]".format(postcode))
         # take out any whitespace
-        postcode = postcode.strip()
-        postcode = postcode.replace(" ","")
-        reqResult = urllib.request.urlopen(self.postcode_api+postcode).read()
-        data = json.loads(reqResult)
+        try:
+            postcode = postcode.strip()
+            postcode = postcode.replace(" ","")
+            reqResult = urllib.request.urlopen(self.postcode_api+postcode).read()
+            data = json.loads(reqResult)
         
-        latitude = data["result"]["latitude"]
-        longitude = data["result"]["longitude"]
+            latitude = data["result"]["latitude"]
+            longitude = data["result"]["longitude"]
 
-        loc = self.Location(latitude,longitude)
-        return loc
-        # @FIXME: This returns a dictionary of all the relevant data, not just longitude and latitude
-        # How do we want it returned? e.g. namedtuple
+            loc = self.Location(latitude,longitude)
+            return loc
+        except:
+            print("encountered error when finding location for [{0}]".format(postcode))
+            raise Exception("no location found for [{0}]".format(postcode))
         
     # this distance function uses the haversine formula 'as the crow flies' (don't ask me to explain the maths!)
     # can read more here: https://www.movable-type.co.uk/scripts/latlong.html
@@ -98,7 +100,7 @@ if __name__ == "__main__":
     processor = PostcodeProcessor()
     processor.getDistanceBetweenTwoPostcodes("EH87JW","EH68BR")
     print("finding nearest neighbor to EH87JW from the list EH68BR EH395AJ and G1 1RU")
-    neighbours = ["EH68BR","EH395AJ","G1 1RU"]
+    neighbours = ["EH68BR","CC","G1 1RU"]
     processor.getNearestNeighbourToPostcode("EH87JW",neighbours)
     #expected output
     #fetching location data for [EH87JW]

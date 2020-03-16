@@ -6,6 +6,8 @@ from email import policy
 from datetime import datetime
 import configparser
 import PostcodeFinder
+import PostcodeProcessor
+import VolunteerTeamsConfig
 
 import smtplib
 
@@ -18,6 +20,7 @@ class EmailRelayProcessor:
     smtp_host = None
     smtp_port = None
     post_code_processor = None
+    volunteer_teams = None
    
     def __init__(self):
         """ On construction we will get our email settings for reading 
@@ -31,6 +34,8 @@ class EmailRelayProcessor:
         self.smtp_host = config['EMAIL']['SMTPHost']
         self.smtp_port = config['EMAIL']['SMTPPort']
         self.postcode_finder = PostcodeFinder.PostcodeFinder()
+        self.post_code_processor = PostcodeProcessor.PostcodeProcessor()
+        self.volunteer_teams = VolunteerTeamsConfig.VolunteerTeams()
 
     def run(self):
         """ process new messages coming in from to our inbox. """
@@ -107,6 +112,23 @@ class EmailRelayProcessor:
         postcodes += self.postcode_finder.find_postcodes(text)
         if (len(postcodes) == 0):
             postcodes += self.postcode_finder.find_postcodes(subject)
+            print("Found postcodes = " + str(postcodes))
+
+        # if we've got some postcodes, determine nearest group and forward email
+        if(len(postcodes) != 0):
+            # try and find the nearest neighbour, if we have any problems, we forward onto to the default list 
+            forwardingEmail = None
+            try:
+                nearestNeighbour = self.post_code_processor.getNearestNeighbourToPostcode(postcodes[0],self.volunteer_teams.get_all_postcodes())
+                print("nearest neighbour to [{0}] is [{1}]".format(postcodes[0],nearestNeighbour))
+                print("finding team...")
+                forwardingEmail = self.volunteer_teams.get_email_from_postcode(nearestNeighbour)
+                print("team found, forwarding message")
+            except:
+                print("team not found, forwarding to default address")
+                forwardingEmail = self.volunteer_teams.get_default_email_address()
+
+            self.fowardEmail(msg, forwardingEmail)
 
         # TODO: Not yet fully implemented
         # We get get the postcodes but we this is not yet wired into
@@ -115,7 +137,7 @@ class EmailRelayProcessor:
         print("-------------------------------------------------------------------------")
         print(text)
         print("--------")
-        print("Found postcodes = " + str(postcodes))
+        
 
         # TODO: once we figure out which email address to send it to we can use this fowardEmail
         # e.g. self.fowardEmail(msg, 'covid19edapptest1@gmail.com')
@@ -135,6 +157,8 @@ class EmailRelayProcessor:
         smtp.login(self.email_address, self.email_pass)
         smtp.sendmail(self.email_address, to_addr, message.as_string())
         smtp.quit()
+
+        print("email sent")
      
 
 
