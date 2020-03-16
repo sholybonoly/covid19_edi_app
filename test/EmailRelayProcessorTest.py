@@ -58,7 +58,7 @@ class EmailRelayProcessorTest(unittest.TestCase):
         # assert test 
         
     
-    def test_processMailText1(self):
+    def test_processEmail1(self):
         """
         """
         erp=EmailRelayProcessor()
