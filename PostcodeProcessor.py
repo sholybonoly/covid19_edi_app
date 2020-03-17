@@ -5,6 +5,7 @@ import configparser
 import collections
 from collections import namedtuple
 
+
 class PostcodeProcessor:
 
     postcode_api = ''
@@ -38,6 +39,11 @@ class PostcodeProcessor:
             print("encountered error when finding location for [{0}]".format(postcode))
             raise Exception("no location found for [{0}]".format(postcode))
         
+    def getLocationDataFromPostCodeKML(self, postcode):
+        """
+        """
+        pass 
+    
     # this distance function uses the haversine formula 'as the crow flies' (don't ask me to explain the maths!)
     # can read more here: https://www.movable-type.co.uk/scripts/latlong.html
     # it returns a value in meters, rounded up to the nearest whole meter
