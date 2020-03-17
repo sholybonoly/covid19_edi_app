@@ -1,9 +1,11 @@
+import os
 import urllib.request
 import json
 import math
 import configparser
 import collections
 from collections import namedtuple
+from fastkml import kml
 
 
 class PostcodeProcessor:
@@ -12,11 +14,41 @@ class PostcodeProcessor:
 
     Location = namedtuple('Location','latitude longitude')
     
+    postcodeLocationDict = None
 
     def __init__(self):
         config = configparser.ConfigParser()
         config.read('config.ini')
         self.postcode_api = config.get('POSTCODE','PostcodeApi')
+        self._createPostcodeDictionaryFromKML()
+
+    def _createPostcodeDictionaryFromKML(self):
+        """ Reads in kml file converts data to dictionary on postcode.
+        Then we can look up quickly later.
+        
+        """ 
+        edinburghPostcodeKmlFile = os.path.join(os.getenv('COVID19EDAPP'),'auxdir','CityOfEdinburghPostcodes.kml')
+        # read it using fastkml
+        if not os.path.exists(edinburghPostcodeKmlFile):
+            raise ValueError("Expected KML file %s does not exist" % edinburghPostcodeKmlFile)
+        with open(edinburghPostcodeKmlFile, 'rt', encoding="utf-8") as myfile:
+            doc=myfile.read()
+        kmlInst = kml.KML()
+        kmlInst.from_string(doc)
+        
+        # Get top layer features
+        featuresLayer1 = list(kmlInst.features())
+        # Get next layer - individual postcodes layer
+        featuresLayer2 = list(featuresLayer1[0].features())
+        # Should be 18948 unique Edinburgh postcodes
+        if len(featuresLayer2)!=18948:
+            raise ValueError("Expected 18948 postcode entries, but number found is %s" % len(featuresLayer2))
+        
+        # process into dictionary: dict(postcode,Tuple(longitude,latitude)
+        self.postcodeLocationDict=dict([(feature.name.strip(),feature.geometry) 
+            for feature in featuresLayer2]) 
+        
+
 
     # user the http://api.postcodes.io API to fetch location data for 
     # postcode
@@ -40,16 +72,26 @@ class PostcodeProcessor:
             print(e)
             raise Exception("no location found for [{0}]".format(postcode))
         
-    def getLocationDataFromPostCodeKML(self, postcode):
+    def getLocationFromPostcodeKML(self, postcode):
+        """ Get location data from KML file 
+        
+        
         """
-        """
-        pass 
+        if not self.postcodeLocationDict:
+            raise ValueError("Postcode location dictionary has not been initialised from KML file")
+        if postcode not in self.postcodeLocationDict:
+            raise KeyError("Postcode %s is not a valid Edinburgh postcode" % postcode)
+        coords=self.postcodeLocationDict[postcode.strip()]
+        # Reverse coordinates to be consistant with previous function
+        return self.Location(coords.y,coords.x)
+        
     
-    # this distance function uses the haversine formula 'as the crow flies' (don't ask me to explain the maths!)
+    # this distance function uses the haversine formula 'as the crow flies' (don't 
+    # ask me to explain the maths!). It comes from the main Spherical Trigonometry Equations
     # can read more here: https://www.movable-type.co.uk/scripts/latlong.html
     # it returns a value in meters, rounded up to the nearest whole meter
     def calculateDistance(self,xLat,xLong,yLat,yLong):
-        R = 6371e3
+        R = 6371e3 # Mean Earth radius in km
         xLatRadians = math.radians(xLat)
         yLatRadians = math.radians(yLat)
         
@@ -84,7 +126,11 @@ class PostcodeProcessor:
         return distanceInMeters
 
     def getNearestNeighbourToPostcode(self, postcode, neighbours):
-
+        """ Finds nearest neighbour to postcode.
+        
+        
+        """
+        
         print("Finding nearest postcode to [{0}] from [{1}] neighbours".format(postcode,len(neighbours)))
 
         nearestDistance = self.getDistanceBetweenTwoPostcodes(postcode, neighbours[0])

@@ -21,8 +21,8 @@ class EmailRelayProcessorTest(unittest.TestCase):
         self.postcode2='DD4 8QZ' # Non-Edinburgh postcode
         self.postcode3='EH13' # Partial postcode
  
-    def test_getLatAndLongFromPostcode1(self):
-        """ Test processing of get date sent
+    def test_getLocationFromPostcode1(self):
+        """ Test processing of location from postcode
         
         """
         
@@ -31,8 +31,8 @@ class EmailRelayProcessorTest(unittest.TestCase):
         self.assertEqual(coords.latitude,self.longLat1.latitude)
         self.assertEqual(coords.longitude,self.longLat1.longitude)
         
-    def test_getLatAndLongFromPostcode2(self):
-        """ Test processing of get date sent
+    def test_getLoctionFromPostcode2(self):
+        """ Test processing of location from postcode
         
         """
         
@@ -41,19 +41,54 @@ class EmailRelayProcessorTest(unittest.TestCase):
         self.assertNotEqual(coords.latitude,self.longLat1.latitude)
         self.assertNotEqual(coords.longitude,self.longLat1.longitude)
         
-    def test_getLatAndLongFromPostcode3(self):
+    def test_getLocationFromPostcode3(self):
         """ Test processing of get date sent
         
         """
         
         pstPrc=PostcodeProcessor()
         try:
-            _coords=pstPrc.getLatAndLongFromPostcode(self.postcode3)
+            _coords=pstPrc.getLocationFromPostcode(self.postcode3)
             self.assertTrue(0,'Bad coordinate should not return postcode.')
         except:
             self.assertRaises(HTTPError)
         
+    def test_getLocationFromPostcodeKML1(self):
+        """ Test processing of location from postcode
         
+        """
+        
+        pstPrc=PostcodeProcessor()
+        coords=pstPrc.getLocationFromPostcodeKML(self.postcode1)
+        self.assertEqual(coords.latitude,self.longLat1.latitude)
+        self.assertEqual(coords.longitude,self.longLat1.longitude)
+        
+    def test_getLocationFromPostcodeKML2(self):
+        """ Test processing of location from postcode
+        Outside Edinburgh / invalid 
+        
+        """
+        
+        pstPrc=PostcodeProcessor()
+        try:
+            _coords=pstPrc.getLocationFromPostcodeKML(self.postcode2)
+            self.assertTrue(0,'Bad coordinate should not return postcode.')
+        except:
+            self.assertRaises(KeyError)    
+        
+    def test_getLocationFromPostcodeKML3(self):
+        """ Test processing of get date sent
+        
+        """
+        
+        pstPrc=PostcodeProcessor()
+        try:
+            _coords=pstPrc.getLocationFromPostcodeKML(self.postcode3)
+            self.assertTrue(0,'Bad coordinate should not return postcode.')
+        except:
+            self.assertRaises(HTTPError)
+        
+       
        
     def test_calculateDistance1(self):
         """
