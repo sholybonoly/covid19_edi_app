@@ -60,6 +60,8 @@ class PostcodeProcessor:
             postcode = postcode.upper()
             print ("processing post code " + postcode)
             reqResult = urllib.request.urlopen(self.postcode_api+postcode).read()
+            # make sure we have JSON in string format
+            reqResult = reqResult.decode('utf-8')  
             data = json.loads(reqResult)
         
             latitude = data["result"]["latitude"]
