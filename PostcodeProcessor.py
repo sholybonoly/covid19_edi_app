@@ -6,6 +6,7 @@ import configparser
 import collections
 from collections import namedtuple
 from fastkml import kml
+from operator import itemgetter
 
 
 class PostcodeProcessor:
@@ -93,14 +94,19 @@ class PostcodeProcessor:
     # can read more here: https://www.movable-type.co.uk/scripts/latlong.html
     # it returns a value in meters, rounded up to the nearest whole meter
     def calculateDistance(self,xLat,xLong,yLat,yLong):
-        R = 6371e3 # Mean Earth radius in km
+        """ Takes lat, long for 2 points 
+        
+        returns distance in m
+        """
+        R = 6.371e6 # Mean Earth radius in m
         xLatRadians = math.radians(xLat)
         yLatRadians = math.radians(yLat)
         
         latDelta = math.radians(xLat - yLat)
         longDelta = math.radians(xLong - yLong)
 
-        a = math.sin(latDelta/2) * math.sin(latDelta/2) + math.cos(xLatRadians) * math.cos(yLatRadians) * math.sin(longDelta/2) * math.sin(longDelta/2)
+        a = (math.sin(latDelta/2) * math.sin(latDelta/2) + math.cos(xLatRadians) * 
+             math.cos(yLatRadians) * math.sin(longDelta/2) * math.sin(longDelta/2))
             
         c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
 
@@ -108,18 +114,21 @@ class PostcodeProcessor:
 
         return round(d)
 
-    def getDistanceBetweenTwoPostcodes(self,postcodeA, postcodeB):
-        locationA = self.getLocationFromPostcode(postcodeA)
-        locationB = self.getLocationFromPostcode(postcodeB)
-
+    def getDistanceBetweenTwoPostcodes(self,postcodeA, postcodeB,useKML=False, isVerbose=False):
+        if not useKML:
+            locationA = self.getLocationFromPostcode(postcodeA)
+            locationB = self.getLocationFromPostcode(postcodeB)
+        else:
+            locationA = self.getLocationFromPostcodeKML(postcodeA)
+            locationB = self.getLocationFromPostcodeKML(postcodeB)
         latitudeA = locationA.latitude
         longitudeA = locationA.longitude
         
         latitudeB = locationB.latitude
         longitudeB = locationB.longitude
-
-        ##print("Postcode [{0}], lat [{1}] long [{2}]".format(postcodeA,latitudeA,longitudeA))
-        ##print("Postcode [{0}], lat [{1}] long [{2}]".format(postcodeB,latitudeB,longitudeB))
+        if isVerbose:
+            print("Postcode [{0}], lat [{1}] long [{2}]".format(postcodeA,latitudeA,longitudeA))
+            print("Postcode [{0}], lat [{1}] long [{2}]".format(postcodeB,latitudeB,longitudeB))
 
         distanceInMeters = self.calculateDistance(latitudeA,longitudeA,latitudeB,longitudeB)
 
@@ -133,7 +142,8 @@ class PostcodeProcessor:
         
         """
         
-        print("Finding nearest postcode to [{0}] from [{1}] neighbours".format(postcode,len(neighbours)))
+        print("Finding nearest postcode to [{0}] from [{1}] neighbours".format(postcode,
+            len(neighbours)))
 
         nearestDistance = self.getDistanceBetweenTwoPostcodes(postcode, neighbours[0])
         nearestPostcode = neighbours[0]
@@ -144,11 +154,30 @@ class PostcodeProcessor:
                 nearestPostcode = neighbour
             
 
-        print("At [{0}] meters, postcode [{1}] is nearest to postcode [{2}]".format(nearestDistance, nearestPostcode, postcode))
+        print("At [{0}] meters, postcode [{1}] is nearest to postcode [{2}]".format(nearestDistance, 
+                nearestPostcode, postcode))
         return nearestPostcode
         
-
-
+    def findNNearestNeighboursToPostcode(self, postcode,numberNeighbours,maxDist=None):
+        """ Finds N nearest neighbours within distance (m).
+        """
+        if numberNeighbours>len(self.postcodeLocationDict):
+            print("Number of neighbours requested (%s) is greater than "
+                  "number of possible neighbours. Returning %s instead" % (
+                      numberNeighbours,len(self.postcodeLocationDict)))
+            numberNeighbours=len(self.postcodeLocationDict)    
+        if postcode not in self.postcodeLocationDict.keys():
+            raise KeyError("%s is an invalid postcode" % postcode)
+        distanceList=sorted([(pcode,self.getDistanceBetweenTwoPostcodes(postcode, pcode,useKML=True)) 
+             for pcode in self.postcodeLocationDict.keys() if pcode!=postcode],
+            key=itemgetter(1))
+        print("MD: ",maxDist,len(distanceList))
+        if maxDist:
+            distanceList=[(pc,dist) for pc,dist in distanceList if dist<maxDist]
+        print("MD2: ",len(distanceList))
+        numberNeighbours = min(len(distanceList),numberNeighbours)
+        return [pc for pc,_dist in distanceList][:numberNeighbours]
+        
 if __name__ == "__main__":
     # Only run this part from the command line
     # Add arguments / options?
@@ -157,10 +186,17 @@ if __name__ == "__main__":
     processor.getDistanceBetweenTwoPostcodes("EH87JW","EH68BR")
     print("finding nearest neighbor to EH87JW from the list EH68BR EH395AJ and G1 1RU")
     neighbours = ["EH68BR","CC","G1 1RU"]
-    processor.getNearestNeighbourToPostcode("EH87JW",neighbours)
+    try:
+        processor.getNearestNeighbourToPostcode("EH87JW",neighbours)
+    except:
+        print("Failed on neighbours")
+        
     #expected output
     #fetching location data for [EH87JW]
     #fetching location data for [EH68BR]
     #Postcode [EH87JW], lat [55.949637] long [-3.148989]
     #Postcode [EH68BR], lat [55.968351] long [-3.166463]
     #Distance between [EH87JW] & [EH68BR] is [2348] meters, as the crow flies
+    neighbours = processor.findNNearestNeighboursToPostcode("EH16 5AA", 5,100)
+    print("Nearest %s neighbours to EH16 5AA within %sm are %s" % (5,100,','.join(neighbours)))
+    

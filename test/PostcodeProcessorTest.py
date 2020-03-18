@@ -1,6 +1,7 @@
 #! /usr/bin/python
 
 import os
+import math
 import unittest 
 from collections import namedtuple
 from urllib.error import HTTPError
@@ -93,18 +94,68 @@ class EmailRelayProcessorTest(unittest.TestCase):
     def test_calculateDistance1(self):
         """
         """
-        pass
+        pstPrc=PostcodeProcessor()
+        long1=0.
+        lat1=0.
+        long2=1.
+        lat2=0.
+        expDistance = 2*math.pi*6.371e6/360. # 1 degree longitude at equator --> circumference/360
+        distance=pstPrc.calculateDistance(lat1, long1, lat2, long2)
+        self.assertAlmostEqual(distance, expDistance, delta=20.)
+    
+    def test_calculateDistance2(self):
+        """
+        """
+        pstPrc=PostcodeProcessor()
+        long1=0.
+        lat1=1.
+        long2=0.
+        lat2=0.
+        expDistance = 2*math.pi*6.371e6/360. # 1 degree latitude at equator --> circumference/360
+        distance=pstPrc.calculateDistance(lat1, long1, lat2, long2)
+        self.assertAlmostEqual(distance, expDistance, delta=20.)
+    
+    def test_calculateDistance3(self):
+        """
+        """
+        pstPrc=PostcodeProcessor()
+        long1=0.
+        lat1=60.
+        long2=1.
+        lat2=60.
+        expDistance = (math.pi*6.371e6)/360. # 1 degree longitude at 60N --> 0.5* circumference/360
+        distance=pstPrc.calculateDistance(lat1, long1, lat2, long2)
+        self.assertAlmostEqual(distance, expDistance, delta=20.)
     
     def test_getDistanceBetweenTwoPostcodes1(self):
         """
         """
-        pass
+        pstPrc=PostcodeProcessor()
+        postcode1='EH16 6GF'
+        postcode2='EH9 3HJ'
+        expDistance = 3000.  
+        distance=pstPrc.getDistanceBetweenTwoPostcodes(postcode1, postcode2)
+        self.assertAlmostEqual(distance, expDistance, delta=100.)
     
-    def test_getNearestNeighbourToPostcode1(self):
+    def test_findNearestNNeighboursToPostcode1(self):
         """
         """
-        pass
+        pstPrc=PostcodeProcessor()
+        postcode1='EH16 6AA'
+        expNeighbours=['EH16 6AJ', 'EH9 3BE', 'EH16 6AD', 'EH16 6AQ', 'EH16 6AH']
+        # Finds nearest 5 neighbours within 1 km
+        neighbours = pstPrc.findNNearestNeighboursToPostcode(postcode1, 5, 1000)
+        self.assertListEqual(neighbours,expNeighbours)
 
+    def test_findNearestNNeighboursToPostcode2(self):
+        """
+        """
+        pstPrc=PostcodeProcessor()
+        postcode1='EH16 6AA'
+        expNeighbours=['EH16 6AJ', 'EH9 3BE']
+        # Finds nearest 5 neighbours within 100m - actually only 2
+        neighbours = pstPrc.findNNearestNeighboursToPostcode(postcode1, 5, 100)
+        self.assertListEqual(neighbours,expNeighbours)
 #------------------------------------------------------------------------------
 if __name__ == '__main__':
     unittest.main()
