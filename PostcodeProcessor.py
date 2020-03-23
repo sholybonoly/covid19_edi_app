@@ -7,6 +7,7 @@ import collections
 from collections import namedtuple
 from fastkml import kml
 from operator import itemgetter
+import logging
 
 
 class PostcodeProcessor:
@@ -54,12 +55,12 @@ class PostcodeProcessor:
     # user the http://api.postcodes.io API to fetch location data for 
     # postcode
     def getLocationFromPostcode(self,postcode):
-        print("fetching location data for [{0}]".format(postcode))
+        logging.debug("fetching location data for [{0}]".format(postcode))
         # take out any whitespace
         try:
             postcode = postcode.replace(" ","")
             postcode = postcode.upper()
-            print ("processing post code " + postcode)
+            logging.debug("processing post code " + postcode)
             reqResult = urllib.request.urlopen(self.postcode_api+postcode).read()
             # make sure we have JSON in string format
             reqResult = reqResult.decode('utf-8')  
@@ -71,8 +72,8 @@ class PostcodeProcessor:
             loc = self.Location(latitude,longitude)
             return loc
         except Exception as e:
-            print("encountered error when finding location for [{0}]".format(postcode))
-            print(e)
+            logging.error("encountered error when finding location for [{0}]".format(postcode))
+            logging.error(e)
             raise Exception("no location found for [{0}]".format(postcode))
         
     def getLocationFromPostcodeKML(self, postcode):
@@ -127,22 +128,20 @@ class PostcodeProcessor:
         latitudeB = locationB.latitude
         longitudeB = locationB.longitude
         if isVerbose:
-            print("Postcode [{0}], lat [{1}] long [{2}]".format(postcodeA,latitudeA,longitudeA))
-            print("Postcode [{0}], lat [{1}] long [{2}]".format(postcodeB,latitudeB,longitudeB))
+            logging.debug("Postcode [{0}], lat [{1}] long [{2}]".format(postcodeA,latitudeA,longitudeA))
+            logging.debug("Postcode [{0}], lat [{1}] long [{2}]".format(postcodeB,latitudeB,longitudeB))
 
         distanceInMeters = self.calculateDistance(latitudeA,longitudeA,latitudeB,longitudeB)
 
-        ##print("Distance between [{0}] & [{1}] is [{2}] meters, as the crow flies".format(postcodeA,postcodeB,distanceInMeters))
+        logging.debug("Distance between [{0}] & [{1}] is [{2}] meters, as the crow flies".format(postcodeA,postcodeB,distanceInMeters))
 
         return distanceInMeters
 
     def getNearestNeighbourToPostcode(self, postcode, neighbours):
         """ Finds nearest neighbour to postcode.
-        
-        
         """
         
-        print("Finding nearest postcode to [{0}] from [{1}] neighbours".format(postcode,
+        logging.debug("Finding nearest postcode to [{0}] from [{1}] neighbours".format(postcode,
             len(neighbours)))
 
         nearestDistance = self.getDistanceBetweenTwoPostcodes(postcode, neighbours[0])
@@ -154,7 +153,7 @@ class PostcodeProcessor:
                 nearestPostcode = neighbour
             
 
-        print("At [{0}] meters, postcode [{1}] is nearest to postcode [{2}]".format(nearestDistance, 
+        logging.debug("At [{0}] meters, postcode [{1}] is nearest to postcode [{2}]".format(nearestDistance, 
                 nearestPostcode, postcode))
         return nearestPostcode
         
@@ -162,7 +161,7 @@ class PostcodeProcessor:
         """ Finds N nearest neighbours within distance (m).
         """
         if numberNeighbours>len(self.postcodeLocationDict):
-            print("Number of neighbours requested (%s) is greater than "
+            logging.debug("Number of neighbours requested (%s) is greater than "
                   "number of possible neighbours. Returning %s instead" % (
                       numberNeighbours,len(self.postcodeLocationDict)))
             numberNeighbours=len(self.postcodeLocationDict)    
@@ -171,32 +170,10 @@ class PostcodeProcessor:
         distanceList=sorted([(pcode,self.getDistanceBetweenTwoPostcodes(postcode, pcode,useKML=True)) 
              for pcode in self.postcodeLocationDict.keys() if pcode!=postcode],
             key=itemgetter(1))
-        print("MD: ",maxDist,len(distanceList))
+        logging.debug("MD: ",maxDist,len(distanceList))
         if maxDist:
             distanceList=[(pc,dist) for pc,dist in distanceList if dist<maxDist]
-        print("MD2: ",len(distanceList))
+        logging.debug("MD2: ",len(distanceList))
         numberNeighbours = min(len(distanceList),numberNeighbours)
         return [pc for pc,_dist in distanceList][:numberNeighbours]
         
-if __name__ == "__main__":
-    # Only run this part from the command line
-    # Add arguments / options?
-
-    processor = PostcodeProcessor()
-    processor.getDistanceBetweenTwoPostcodes("EH87JW","EH68BR")
-    print("finding nearest neighbor to EH87JW from the list EH68BR EH395AJ and G1 1RU")
-    neighbours = ["EH68BR","CC","G1 1RU"]
-    try:
-        processor.getNearestNeighbourToPostcode("EH87JW",neighbours)
-    except:
-        print("Failed on neighbours")
-        
-    #expected output
-    #fetching location data for [EH87JW]
-    #fetching location data for [EH68BR]
-    #Postcode [EH87JW], lat [55.949637] long [-3.148989]
-    #Postcode [EH68BR], lat [55.968351] long [-3.166463]
-    #Distance between [EH87JW] & [EH68BR] is [2348] meters, as the crow flies
-    neighbours = processor.findNNearestNeighboursToPostcode("EH16 5AA", 5,100)
-    print("Nearest %s neighbours to EH16 5AA within %sm are %s" % (5,100,','.join(neighbours)))
-    

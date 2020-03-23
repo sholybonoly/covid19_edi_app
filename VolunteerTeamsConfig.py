@@ -55,7 +55,6 @@ class VolunteerTeams:
     def get_email_from_postcode(self, postcode):
         for key in self.teams:
             if(self.teams[key].postcode == postcode):
-                print("team [{0}] found from postcode [{1}]".format(self.teams[key].name,postcode))
                 return self.teams[key].email
         
         raise Exception("unable to find team for postcode [{0}]".format(postcode))

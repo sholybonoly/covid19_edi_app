@@ -1,5 +1,6 @@
 import re
 import configparser
+import logging
 
 class PostcodeFinder:
 
@@ -20,6 +21,8 @@ class PostcodeFinder:
         # Ignore case and we don't care if there is a space between beginning and end
 
         matches = re.findall(self.prefix + '\d+\s*\d\w\w', text, re.IGNORECASE)
+
+        logging.debug("Found " + str(len(matches)) + " postcode matche(s)")
 
         # Our PostcodeProcessor does not support partial poscodes yet
         # We could extend this look for partial postcodes at later point in time.
