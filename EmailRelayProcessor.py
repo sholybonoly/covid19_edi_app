@@ -10,6 +10,7 @@ import PostcodeProcessor
 import VolunteerTeamsConfig
 
 import smtplib
+import logging
 
 class EmailRelayProcessor:
 
@@ -39,6 +40,11 @@ class EmailRelayProcessor:
 
     def run(self):
         """ process new messages coming in from to our inbox. """
+
+        logging.info("Processing inbox " + self.email_address)
+        logging.debug("IMAP port " + self.imap_host)
+        logging.debug("IMAP port " + self.imap_port)
+
         M = imaplib.IMAP4_SSL(self.imap_host, self.imap_port)
         M.login(self.email_address, self.email_pass)
         M.select('inbox')
@@ -46,14 +52,20 @@ class EmailRelayProcessor:
         # pick up only emails that have not yet been processed
         (typ, nmsg) = M.search(None, 'NOT (X-GM-LABELS "Processed")')
         if typ != 'OK':
+            logging.error("Failed to search inbox for non processed emails - " + nmsg)
             raise RuntimeError(nmsg)
 
-        for num in nmsg[0].split():
+        email_nums = nmsg[0].split()
+
+        logging.info(str(len(email_nums)) + " emails to process")
+
+        for num in email_nums:
             typ, data = M.fetch(num, '(RFC822)')  
             msg = email.message_from_bytes(data[0][1], policy=policy.default)
             if msg: 
 
                 # got ahead and process the email
+                logging.debug("Processing email - " + num.decode('utf-8'))
                 self.processEmail(msg)
 
                 # we mark our email as processed after we successfully
@@ -70,6 +82,7 @@ class EmailRelayProcessor:
                 # This is actually adds a label in google mail
                 response = M.uid('COPY', msg_uid, 'Processed')
                 if response[0] != 'OK':
+                    logging.debug("Failed to set label to processed for email uid " + msg_uid)
                     raise RuntimeError(response[1])
 
                 # this will apply copy changes
@@ -98,7 +111,6 @@ class EmailRelayProcessor:
             if part.get_content_type() == 'text/plain':
                 return part.get_payload() # return the raw text
 
-
     def processEmail(self, msg):
 
         # extract plain text date and subject from email
@@ -110,9 +122,10 @@ class EmailRelayProcessor:
         # first look in the body of the text and if we didn't find anything
         # look in the subject
         postcodes += self.postcode_finder.find_postcodes(text)
+        logging.debug("Found postcodes in body - " + str(postcodes))
         if (len(postcodes) == 0):
             postcodes += self.postcode_finder.find_postcodes(subject)
-            print("Found postcodes = " + str(postcodes))
+            logging.debug("Found postcodes in subject - " + str(postcodes))
 
         # if we've got some postcodes, determine nearest group and forward email
         if(len(postcodes) != 0):
@@ -120,24 +133,17 @@ class EmailRelayProcessor:
             forwardingEmail = None
             try:
                 nearestNeighbour = self.post_code_processor.getNearestNeighbourToPostcode(postcodes[0],self.volunteer_teams.get_all_postcodes())
-                print("nearest neighbour to [{0}] is [{1}]".format(postcodes[0],nearestNeighbour))
-                print("finding team...")
+                logging.debug("nearest neighbour to [{0}] is [{1}]".format(postcodes[0],nearestNeighbour))
                 forwardingEmail = self.volunteer_teams.get_email_from_postcode(nearestNeighbour)
-                print("team found, forwarding message")
-
-                print ("-------------------------------------")
-                print ("Found email with postcodes")
-                print (text)
-                print ("-------------------------------------")
-
+                logging.debug("team found (" + forwardingEmail + ")")
             except:
-                print("team not found, forwarding to default address")
+                logging.info("team not found, forwarding to default address")
                 forwardingEmail = self.volunteer_teams.get_default_email_address()
         else:
-            print("No postcode found in email, forwarding to default address")
+            logging.info("No postcode found in email, forwarding to default address")
             forwardingEmail = self.volunteer_teams.get_default_email_address()
 
-        print("Forwarding email to " + forwardingEmail)
+        logging.info("Forwarding email to " + forwardingEmail)
         self.fowardEmail(msg, forwardingEmail)
 
     def fowardEmail(self, message, to_addr):
@@ -155,7 +161,7 @@ class EmailRelayProcessor:
         smtp.sendmail(self.email_address, to_addr, message.as_string())
         smtp.quit()
 
-        print("email sent")
+        logging.debug("email sucessfully sent")
      
 
 
