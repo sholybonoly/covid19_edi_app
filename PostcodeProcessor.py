@@ -13,6 +13,7 @@ import logging
 class PostcodeProcessor:
 
     postcode_api = ''
+    postcode_file = ''
 
     Location = namedtuple('Location','latitude longitude')
     
@@ -22,6 +23,7 @@ class PostcodeProcessor:
         config = configparser.ConfigParser()
         config.read('config.ini')
         self.postcode_api = config.get('POSTCODE','PostcodeApi')
+        self.postcode_file = config.get('POSTCODE','PostcodeFile')
         self._createPostcodeDictionaryFromKML()
 
     def _createPostcodeDictionaryFromKML(self):
@@ -29,11 +31,10 @@ class PostcodeProcessor:
         Then we can look up quickly later.
         
         """ 
-        edinburghPostcodeKmlFile = os.path.join(os.getenv('COVID19EDAPP'),'auxdir','CityOfEdinburghPostcodes.kml')
         # read it using fastkml
-        if not os.path.exists(edinburghPostcodeKmlFile):
-            raise ValueError("Expected KML file %s does not exist" % edinburghPostcodeKmlFile)
-        with open(edinburghPostcodeKmlFile, 'rt', encoding="utf-8") as myfile:
+        if not os.path.exists(self.postcode_file):
+            raise ValueError("Expected KML file %s does not exist" % self.postcode_file)
+        with open(self.postcode_file, 'rt', encoding="utf-8") as myfile:
             doc=myfile.read()
         kmlInst = kml.KML()
         kmlInst.from_string(doc)
