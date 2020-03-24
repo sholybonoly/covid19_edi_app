@@ -66,7 +66,14 @@ class EmailRelayProcessor:
 
                 # got ahead and process the email
                 logging.debug("Processing email - " + num.decode('utf-8'))
-                self.processEmail(msg)
+
+                try:
+                    self.processEmail(msg)
+                except Exception as e:
+                    logging.error("Failed to process email. Don't mark it as processed")
+                    logging.error(e)
+                    continue
+                
 
                 # we mark our email as processed after we successfully
                 # complete processing if it drops out at all here we will
@@ -155,12 +162,18 @@ class EmailRelayProcessor:
 
         # open authenticated SMTP connection and send message with
         # specified envelope from and to addresses
-        smtp = smtplib.SMTP(self.smtp_host, self.smtp_port)
-        smtp.starttls()
-        smtp.login(self.email_address, self.email_pass)
-        smtp.sendmail(self.email_address, to_addr, message.as_string())
-        smtp.quit()
-
+        try:
+            smtp = smtplib.SMTP(self.smtp_host, self.smtp_port)
+            smtp.starttls()
+            smtp.login(self.email_address, self.email_pass)
+            smtp.sendmail(self.email_address, to_addr, message.as_string())
+            smtp.quit()
+        except Exception as e:
+            logging.error("Error encountered when sending email")
+            logging.error(e)
+            # rethrow execption so we can catch again
+            throw(e)
+            
         logging.debug("email sucessfully sent")
      
 
