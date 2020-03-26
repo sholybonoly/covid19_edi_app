@@ -50,7 +50,7 @@ class EmailRelayProcessor:
         M.select('inbox')
 
         # pick up only emails that have not yet been processed
-        (typ, nmsg) = M.search(None, 'NOT (X-GM-LABELS "Processed")')
+        (typ, nmsg) = M.search(None, '(UNSEEN)')
         if typ != 'OK':
             logging.error("Failed to search inbox for non processed emails - " + nmsg)
             raise RuntimeError(nmsg)
@@ -72,6 +72,9 @@ class EmailRelayProcessor:
                 except Exception as e:
                     logging.error("Failed to process email. Don't mark it as processed")
                     logging.error(e)
+                    # Mark the item as unseen as we didn't successfully process this item
+                    M.store(num,'-FLAGS','\Seen')
+                    M.expunge()
                     continue
                 
 
@@ -85,14 +88,10 @@ class EmailRelayProcessor:
                 uid_string = data[0].decode('utf-8')
                 msg_uid = self.parse_uid(uid_string)
 
-                # Mark our email as processed so we don't pick it up again next time
-                # This is actually adds a label in google mail
-                response = M.uid('COPY', msg_uid, 'Processed')
-                if response[0] != 'OK':
-                    logging.debug("Failed to set label to processed for email uid " + msg_uid)
-                    raise RuntimeError(response[1])
+                # Mark the item as seen
+                M.store(num,'+FLAGS','\Seen')
 
-                # this will apply copy changes
+                # this will apply store changes
                 M.expunge()
         
         M.close()
