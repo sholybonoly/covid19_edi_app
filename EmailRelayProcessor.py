@@ -171,7 +171,7 @@ class EmailRelayProcessor:
             logging.error("Error encountered when sending email")
             logging.error(e)
             # rethrow execption so we can catch again
-            throw(e)
+            raise e
             
         logging.debug("email sucessfully sent")
      
