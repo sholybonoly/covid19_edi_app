@@ -8,9 +8,11 @@ import configparser
 import PostcodeFinder
 import PostcodeProcessor
 import VolunteerTeamsConfig
-
-import smtplib
+import os
 import logging
+import requests
+import os
+from os import path
 
 class EmailRelayProcessor:
 
@@ -22,6 +24,7 @@ class EmailRelayProcessor:
     smtp_port = None
     post_code_processor = None
     volunteer_teams = None
+    mailgun_api_key = None
    
     def __init__(self):
         """ On construction we will get our email settings for reading 
@@ -32,8 +35,7 @@ class EmailRelayProcessor:
         self.email_pass = config['EMAIL']['Password']
         self.imap_host = config['EMAIL']['IMAPHost']
         self.imap_port = config['EMAIL']['IMAPPort']
-        self.smtp_host = config['EMAIL']['SMTPHost']
-        self.smtp_port = config['EMAIL']['SMTPPort']
+        self.mailgun_api_key = config['EMAIL']['MailGunAPIKey']
         self.postcode_finder = PostcodeFinder.PostcodeFinder()
         self.post_code_processor = PostcodeProcessor.PostcodeProcessor()
         self.volunteer_teams = VolunteerTeamsConfig.VolunteerTeams()
@@ -45,9 +47,13 @@ class EmailRelayProcessor:
         logging.debug("IMAP port " + self.imap_host)
         logging.debug("IMAP port " + self.imap_port)
 
-        M = imaplib.IMAP4_SSL(self.imap_host, self.imap_port)
-        M.login(self.email_address, self.email_pass)
-        M.select('inbox')
+        try:
+            M = imaplib.IMAP4_SSL(self.imap_host)
+            M.login(self.email_address, self.email_pass)
+            M.select('inbox')
+        except Exception as e:
+            logging.error(e)
+
 
         # pick up only emails that have not yet been processed
         (typ, nmsg) = M.search(None, '(UNSEEN)')
@@ -70,14 +76,13 @@ class EmailRelayProcessor:
                 try:
                     self.processEmail(msg)
                 except Exception as e:
-                    logging.error("Failed to process email. Don't mark it as processed")
+                    logging.error("Failed to process email. Don't mark it as seen so we can attempt to process again")
                     logging.error(e)
                     # Mark the item as unseen as we didn't successfully process this item
                     M.store(num,'-FLAGS','\Seen')
                     M.expunge()
                     continue
                 
-
                 # we mark our email as processed after we successfully
                 # complete processing if it drops out at all here we will
                 # try again on next run
@@ -159,20 +164,33 @@ class EmailRelayProcessor:
         # miss with the way it was displayed from original sending
         message.replace_header("To", to_addr)
 
-        # open authenticated SMTP connection and send message with
-        # specified envelope from and to addresses
+        #create a mailgun friendly message based on message object
+        response = None
         try:
-            smtp = smtplib.SMTP(self.smtp_host, self.smtp_port)
-            smtp.starttls()
-            smtp.login(self.email_address, self.email_pass)
-            smtp.sendmail(self.email_address, to_addr, message.as_string())
-            smtp.quit()
+
+            #get the message as MIME format so we can pass on intact
+            files = {'message': message.as_string()}
+
+            # send email on by using mailgun service
+            response = requests.post(
+                "https://api.eu.mailgun.net/v3/covid19helpedinburgh.org.uk/messages.mime",
+                auth=("api", self.mailgun_api_key),
+                files=files,
+                data={"to": to_addr})
+
+            logging.debug("response from mailgun:")
+            logging.debug(response.json())
+
         except Exception as e:
-            logging.error("Error encountered when sending email")
+            logging.error("Exception thrown when sending message")
             logging.error(e)
+
             # rethrow execption so we can catch again
             raise e
-            
+
+        if not response or response.status_code != 200:
+            raise Exception("Bad response from request to forward email to mailgun - " + str(response.status_code))
+
         logging.debug("email sucessfully sent")
      
 

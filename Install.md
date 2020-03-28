@@ -20,9 +20,10 @@ For Edinburgh Coronavirus volunter groups this has been setup on google cloud ho
 
 * Update /opt/app/config.ini with mailbox details and password and teams.csv for forwarding on emails
 
+* Add mail gun API key based on mail gun account (required to send emails)
+
 * Set a log file output where you have permissions to write to
 
-* Setup cron job to run every minute
 
     <code>
         >crontab -e
