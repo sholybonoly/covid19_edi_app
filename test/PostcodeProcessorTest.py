@@ -156,6 +156,23 @@ class EmailRelayProcessorTest(unittest.TestCase):
         # Finds nearest 5 neighbours within 100m - actually only 2
         neighbours = pstPrc.findNNearestNeighboursToPostcode(postcode1, 5, 100)
         self.assertListEqual(neighbours,expNeighbours)
+        
+    def test_findNearestNNeighboursToPostcode3(self):
+        """
+        """
+        pstPrc=PostcodeProcessor()
+        # Inactive postcode
+        postcode1='EH3 1DX'
+        volunteerDistricts=['EH3 5JZ', 'EH7 6AA', 'EH16 5DQ', 'EH9 2HG', 'EH11 2LX','EH4 3HB']
+        # Finds nearest 5 neighbours within 1 km
+        try:
+            _nearestNeighbour = pstPrc.getNearestNeighbourToPostcode(postcode1, volunteerDistricts,useKML=True)
+            self.assertTrue(False)
+        except KeyError:
+            self.assertTrue(True)
+        except:
+            self.assertTrue(False)
+        
 #------------------------------------------------------------------------------
 if __name__ == '__main__':
     unittest.main()

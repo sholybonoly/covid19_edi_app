@@ -30,6 +30,8 @@ class PostcodeProcessor:
         """ Reads in kml file converts data to dictionary on postcode.
         Then we can look up quickly later.
         
+        KML maps found at.
+        https://www.doogal.co.uk/KmlDataFeeds.php
         """ 
         # read it using fastkml
         if not os.path.exists(self.postcode_file):
@@ -38,20 +40,28 @@ class PostcodeProcessor:
             doc=myfile.read()
         kmlInst = kml.KML()
         kmlInst.from_string(doc)
+    
         
         # Get top layer features
         featuresLayer1 = list(kmlInst.features())
         # Get next layer - individual postcodes layer
         featuresLayer2 = list(featuresLayer1[0].features())
         # Should be 18948 unique Edinburgh postcodes
+        
+        
         if len(featuresLayer2)!=18948:
-            raise ValueError("Expected 18948 postcode entries, but number found is %s" % len(featuresLayer2))
+            raise ValueError("Expected 18948 postcode entries, but number found is %s" % 
+                             len(featuresLayer2))
         
         # process into dictionary: dict(postcode,Tuple(longitude,latitude)
+        # Only include active ones in dictionary
         self.postcodeLocationDict=dict([(feature.name.strip(),feature.geometry) 
-            for feature in featuresLayer2]) 
+            for feature in featuresLayer2 if feature.styleUrl=='#active']) 
         
-
+        if len(self.postcodeLocationDict)!=13214:
+            raise ValueError("Expected 13214 active postcode entries, but number found is %s" % 
+                             len(self.postcodeLocationDict))
+        
 
     # user the http://api.postcodes.io API to fetch location data for 
     # postcode
@@ -138,17 +148,17 @@ class PostcodeProcessor:
 
         return distanceInMeters
 
-    def getNearestNeighbourToPostcode(self, postcode, neighbours):
+    def getNearestNeighbourToPostcode(self, postcode, neighbours,useKML=False):
         """ Finds nearest neighbour to postcode.
         """
         
         logging.debug("Finding nearest postcode to [{0}] from [{1}] neighbours".format(postcode,
             len(neighbours)))
 
-        nearestDistance = self.getDistanceBetweenTwoPostcodes(postcode, neighbours[0])
+        nearestDistance = self.getDistanceBetweenTwoPostcodes(postcode, neighbours[0],useKML)
         nearestPostcode = neighbours[0]
         for neighbour in neighbours:
-            distanceToNeighbour = self.getDistanceBetweenTwoPostcodes(postcode, neighbour)
+            distanceToNeighbour = self.getDistanceBetweenTwoPostcodes(postcode, neighbour,useKML)
             if(distanceToNeighbour < nearestDistance):
                 nearestDistance = distanceToNeighbour
                 nearestPostcode = neighbour
