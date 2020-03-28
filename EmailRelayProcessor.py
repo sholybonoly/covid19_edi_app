@@ -25,6 +25,7 @@ class EmailRelayProcessor:
     post_code_processor = None
     volunteer_teams = None
     mailgun_api_key = None
+    mailgun_post_url = None
    
     def __init__(self):
         """ On construction we will get our email settings for reading 
@@ -36,6 +37,7 @@ class EmailRelayProcessor:
         self.imap_host = config['EMAIL']['IMAPHost']
         self.imap_port = config['EMAIL']['IMAPPort']
         self.mailgun_api_key = config['EMAIL']['MailGunAPIKey']
+        self.mailgun_post_url = config['EMAIL']['MAINGunPostURL']
         self.postcode_finder = PostcodeFinder.PostcodeFinder()
         self.post_code_processor = PostcodeProcessor.PostcodeProcessor()
         self.volunteer_teams = VolunteerTeamsConfig.VolunteerTeams()
@@ -173,7 +175,7 @@ class EmailRelayProcessor:
 
             # send email on by using mailgun service
             response = requests.post(
-                "https://api.eu.mailgun.net/v3/covid19helpedinburgh.org.uk/messages.mime",
+                self.mailgun_post_url,
                 auth=("api", self.mailgun_api_key),
                 files=files,
                 data={"to": to_addr})
