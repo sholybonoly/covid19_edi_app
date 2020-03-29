@@ -79,7 +79,7 @@ class EmailRelayProcessor:
                     self.processEmail(msg)
                 except Exception as e:
                     logging.error("Failed to process email. Don't mark it as seen so we can attempt to process again")
-                    logging.error(e)
+                    logging.error(e.message)
                     # Mark the item as unseen as we didn't successfully process this item
                     M.store(num,'-FLAGS','\Seen')
                     M.expunge()
@@ -118,11 +118,19 @@ class EmailRelayProcessor:
                 return datetime.fromtimestamp(email.utils.mktime_tz(date_tuple))
 
     def getPlainText(self, msg):
+
+        htmlPart = None
+
         for part in msg.walk():
             # each part is a either non-multipart, or another multipart message
             # that contains further parts... Message is organized like a tree
             if part.get_content_type() == 'text/plain':
+                # if we find a plain text part return straight away and use
                 return part.get_payload() # return the raw text
+            if part.get_content_type() == 'text/html':
+                # save html part as we will use if we don't have any plain text
+                htmlPart = part.get_payload() # return the raw text
+        return htmlPart
 
     def processEmail(self, msg):
 

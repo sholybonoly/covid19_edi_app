@@ -15,6 +15,11 @@ class PostcodeFinder:
 
     def find_postcodes(self, text):
         """ Find any postcodes in the text provided """
+
+        # If we have no text return straight away
+        # No postcodes to find
+        if text == None:
+            return []
         
         # First look for any full postcodes
         # We will use these first
